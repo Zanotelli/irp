@@ -1,10 +1,8 @@
-source('myKnnponderado.R')
-rm(list=ls())
 
 #### KNN usando uma média ponderada das distãncias dos pontos
 
 colors<-c('pink', 'purple', 'blue', 'green', 'yellow', 'orange', 'red')
-h<-0.1
+h<-c(0.1, 0.3, 0.5, 0.7, 0.8, 0.9, 1.0)
 
 N<-30
 SD<-0.8
@@ -21,7 +19,8 @@ plot(xc1[,1],xc1[,2],col="red",xlim=c(0,6),ylim=c(0,6))
 par(new=T)
 plot(xc2[,1],xc2[,2],col="blue",xlim=c(0,6),ylim=c(0,6))
 
-for(color in colors){
+
+for(i in 1:length(h)){
   seqi<-seq(0.06,6,0.06)
   seqj<-seq(0.06,6,0.06)
   M1 <- matrix(0,nrow=length(seqi),ncol=length(seqj)) 
@@ -33,14 +32,24 @@ for(color in colors){
     {
       cj<-cj+1
       
-      M1[ci,cj]<- myKnnPonderado(c(i,j), X, Y, 10, h)
+      M1[ci,cj]<- myKnnPonderado(c(i,j), X, Y, 3, h[i])
       
     }
   }
   par(new=T)
-  contour(seqi,seqj,M1,levels=0,xlim=c(0,6),ylim=c(0,6), col=color)
+  contour(seqi,seqj,M1,levels=0,xlim=c(0,6),ylim=c(0,6), col=colors[i])
   h<-h+0.1
 }
+
+
+
+
+
+
+
+
+
+
 
 ###########
 rm(list=ls())
