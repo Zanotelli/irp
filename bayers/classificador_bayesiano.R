@@ -26,8 +26,8 @@ iseq2<-sample(nc)
 
 xtrain1<-xc1[iseq1[1:(nc*0.9)]]
 xtrain2<-xc2[iseq2[1:(nc*0.9)]]
-xte1<-xc1[-iseq1[1:(nc*0.4)]]
-xte2<-xc2[-iseq2[1:(nc*0.4)]]
+xte1<-xc1[-iseq1[(nc*0.1):nc]]
+xte2<-xc2[-iseq2[(nc*0.1):nc]]
 
 yte1<-array(1, dim = c(nc*.1,1))
 yte2<-array(0, dim = c(nc*.1,1))
@@ -48,13 +48,14 @@ s2<-sd(xtrain2)
 
 ### Classifica conjunto de teste
 
-xte<-cbind(xte1, xte2)
-yte<-cbind(yte1, yte2)
+xte<-c(xte1, xte2)
+yte<-c(yte1, yte2)
 
 Pxdc1<-pdf1var(xte, u1, s1)
 Pxdc2<-pdf1var(xte, u2, s2)
 
 class<-Pxdc1*Pc1/(Pxdc2*Pc2)
 
-class
+sum(abs(((class>1)*1)-yte))
+
 
