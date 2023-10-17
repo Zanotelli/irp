@@ -37,7 +37,7 @@ mykmedias<-function(X,k){
       
       for (j in (1:ni))
         acc<-acc+t(as.matrix(X[ici[j],]))
-      
+
       m[i,]<-acc/ni
     }
   } 
@@ -101,31 +101,40 @@ xall<-as.matrix(p[[1]])
 xc1<-xall[ic1,]
 xc2<-xall[ic2,]
 
+
+# xc<-matrix(rnorm(nc*2),ncol=2)*s1 + matrix(c(2,2),nrow=nc,ncol=2)
+
 ######## Classe 1
+
 k1<-10
 retlist1<-mykmedias(xc1,k1)
 xclusters1<-list()
+
 for (i in (1:k1)){
   ici<-which(retlist1[[2]]==i)
   xclusters1[[i]]<-xc1[ici,]
 }
+
 ######## Classe 2
+
 k2<-10
 retlist2<-mykmedias(xc2,k2)
 xclusters2<-list()
+
 for (i in (1:k2)){
   ici<-which(retlist2[[2]]==i)
   xclusters2[[i]]<-xc2[ici,]
 }
 
-########################
-### Utilização do KMeans
+####################
 
 seqi<-seq(-1,1,0.05)
 seqj<-seq(-1,1,0.05)
+
 M1<-matrix(1,nrow=length(seqi),ncol=length(seqj))
 M2<-matrix(1,nrow=length(seqi),ncol=length(seqj))
 M<-matrix(1,nrow=length(seqi),ncol=length(seqj))
+
 
 ci<-0
 for (i in seqi){
@@ -149,22 +158,6 @@ contour(seqi,seqj,M1,nlevels=20,xlim = c(-1,1),ylim = c(-1,1),xlab = '',ylab = '
 contour(seqi,seqj,M2,nlevels=20,xlim = c(-1,1),ylim = c(-1,1),xlab = '',ylab = '',add = T)
 contour(seqi,seqj,nlevels=1,M,xlim = c(-1,1),ylim = c(-1,1),xlab = '',ylab = '',add = T)
 
-### Divisão em populações
-
-xall<-rbind(xc1, xc2)
-retkm<-kmeans(xall, 10)
-plot(xall[,1], xall[,2], xlim=c(-1,1), ylim= c(-1,1), xlab='x1', ylab='x2', col=retkm$cluster)
-contour(seqi,seqj,nlevels=1,M,xlim = c(-1,1),ylim = c(-1,1),xlab = '',ylab = '',add = T)
-
-
-
-#######################
-### Utilização do Bayes
-
-# Dividir a população em 10 partes
-# Tirar uma e treinar com 9, repetir isso para cada uma das 10 partes
-# Vc vai ter 10 resultados com 10 erros. Fazer isso pra cada erro
-
-# Isso vai te ajudar a achar um P
-# Não precisa implementar, da pra usar uma função pra achar cada hiperparâmetro
-
+persp3d(seqi,seqj,M1,col='red')
+persp3d(seqi,seqj,M2,col='blue',add = T)
+persp3d(seqi,seqj,M,col='black',add = T)
