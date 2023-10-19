@@ -2,6 +2,7 @@ rm(list=ls())     # Inicializa todas as variáveis
 library('plot3D')
 library('rgl')
 library('mlbench')
+library('caret')
 # source("/home/apbraga/PRINCIPAL/livros/LIVRO_R/rotinasGPL/mykmedias.R")
 
 
@@ -88,11 +89,19 @@ mymix<-function(x,inlist){
 
 
 ################################
+### K Folds
+
+createKFolds<- function(nsamples, nfolds){
+  folds=rep(1:nfolds, length.out=nsamples)
+  folds=sample(folds)
+  return(folds)
+}
+
+
+################################
 ### Criação das populações
 
-s1<-0.5
-s2<-0.5
-nc<-100
+nc=200
 
 p<-mlbench.spirals(400,1,0.08)
 ic1<-which(p[[2]]==1)
@@ -101,70 +110,94 @@ xall<-as.matrix(p[[1]])
 xc1<-xall[ic1,]
 xc2<-xall[ic2,]
 
-######## Classe 1
-k1<-10
-retlist1<-mykmedias(xc1,k1)
-xclusters1<-list()
-for (i in (1:k1)){
-  ici<-which(retlist1[[2]]==i)
-  xclusters1[[i]]<-xc1[ici,]
-}
-######## Classe 2
-k2<-10
-retlist2<-mykmedias(xc2,k2)
-xclusters2<-list()
-for (i in (1:k2)){
-  ici<-which(retlist2[[2]]==i)
-  xclusters2[[i]]<-xc2[ici,]
-}
 
-########################
-### Utilização do KMeans
+################################
+### Treino e teste
 
-seqi<-seq(-1,1,0.05)
-seqj<-seq(-1,1,0.05)
-M1<-matrix(1,nrow=length(seqi),ncol=length(seqj))
-M2<-matrix(1,nrow=length(seqi),ncol=length(seqj))
-M<-matrix(1,nrow=length(seqi),ncol=length(seqj))
+y1<-array(1, dim=c(nc,1))
+y2<-array(-1, dim=c(nc,1))
+yall=rbind(y1,y2)
+yte1<-array(1, dim = c(nc*.1,1))
+yte2<-array(0, dim = c(nc*.1,1))
+yte=rbind(yte1,yte2)
 
-ci<-0
-for (i in seqi){
-  ci<-ci+1
-  cj<-0
-  for (j in seqj){
-    cj<-cj+1
-    x<-c(i,j)
-    M1[ci,cj]<-mymix(c(i,j),xclusters1)
-    M2[ci,cj]<-mymix(c(i,j),xclusters2)
-  }
+iseq1<-sample(nc)
+iseq2<-sample(nc)
+
+
+nc<-nc*.9
+
+xtrain1<-xc1[iseq1[1:nc],]
+xtrain2<-xc2[iseq2[1:nc],]
+xte1<-xc1[-iseq1[1:nc],]
+xte2<-xc2[-iseq2[1:nc],]
+
+xtrain=rbind(xtrain1, xtrain2)
+xte=rbind(xte1, xte2)
+
+######################
+### 10 folds
+
+nfolds=10
+num_samples = dim(xtrain)[1]
+k=1:5
+
+folds=createKFolds(num_samples, nfolds)
+
+c_vec = c(.01, .1, 1, 10)
+acc_vec = matrix(0, nrow=length(k), ncol=length(c_vec))
+
+for(k_count in length(k)){
+  k1=k[k_count]
+  k2=k[k_count]
   
+  for(fold in 1:nfolds){
+    
+    train=which(folds!=fold)
+    teste=which(folds==fold)
+    
+    i_xtrain=xall[train,]
+    i_xte=xall[teste,]
+    i_ytrain=yall[train]
+    i_yte=yall[teste]
+    
+    i_c1 = which(i_ytrain==1)
+    i_c2 = which(i_ytrain==-1)
+    i_xc1 = i_xtrain[i_c1,]
+    i_xc2 = i_xtrain[i_c2,]
+    
+    i_c1te = which(i_yte=1)
+    i_c2te = which(i_yte=-1)
+    i_xc1te = i_xte[i_c1,]
+    i_xc2te = i_xte[i_c2,]
+    
+    n_amostras_te = dim(xte)[1]
+    n_amostras_train = dim(xte)[2]
+  
+    retlist1<-mykmedias(xc1,k1)
+    xclusters1<-list()
+    for (i in (1:k1)){
+      ici<-which(retlist1[[2]]==i)
+      xclusters1[[i]]<-xc1[ici,]
+    }
+    retlist2<-mykmedias(xc2,k2)
+    xclusters2<-list()
+    for (i in (1:k2)){
+      ici<-which(retlist2[[2]]==i)
+      xclusters2[[i]]<-xc2[ici,]
+    }
+    
+    seqi<-seq(-1,1,0.05)
+    seqj<-seq(-1,1,0.05)
+    M1<-matrix(1,nrow=length(seqi),ncol=length(seqj))
+    M2<-matrix(1,nrow=length(seqi),ncol=length(seqj))
+    M<-matrix(1,nrow=length(seqi),ncol=length(seqj))
+    
+    
+  }
 }
 
-M<-1*(M1 > M2)
-
-plot(xc1[,1],xc1[,2],type='p',col='blue',xlim = c(-1,1),ylim = c(-1,1),xlab = 'Atributo 1',ylab = 'Atributo 2')
-par(new=T)
-plot(xc2[,1],xc2[,2],type='p',col='red',xlim = c(-1,1),ylim = c(-1,1),xlab = ' ',ylab = ' ')
-contour(seqi,seqj,M1,nlevels=20,xlim = c(-1,1),ylim = c(-1,1),xlab = '',ylab = '',add = T)
-contour(seqi,seqj,M2,nlevels=20,xlim = c(-1,1),ylim = c(-1,1),xlab = '',ylab = '',add = T)
-contour(seqi,seqj,nlevels=1,M,xlim = c(-1,1),ylim = c(-1,1),xlab = '',ylab = '',add = T)
-
-### Divisão em populações
-
-xall<-rbind(xc1, xc2)
-retkm<-kmeans(xall, 10)
-plot(xall[,1], xall[,2], xlim=c(-1,1), ylim= c(-1,1), xlab='x1', ylab='x2', col=retkm$cluster)
-contour(seqi,seqj,nlevels=1,M,xlim = c(-1,1),ylim = c(-1,1),xlab = '',ylab = '',add = T)
 
 
-
-#######################
-### Utilização do Bayes
-
-# Dividir a população em 10 partes
-# Tirar uma e treinar com 9, repetir isso para cada uma das 10 partes
-# Vc vai ter 10 resultados com 10 erros. Fazer isso pra cada erro
-
-# Isso vai te ajudar a achar um P
-# Não precisa implementar, da pra usar uma função pra achar cada hiperparâmetro
+# Variamos o Fold, o valor de C e o parâmetro K
 
